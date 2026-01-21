@@ -1,0 +1,36 @@
+cd /home/codeuser/workspace/react-native-ecommerce/express-server
+
+express-server ➜  npm install 
+
+# Generate database schema with tables under db/migrations 
+express-server ➜  npx drizzle-kit generate:pg --config=drizzle.config.js
+
+# Install nodemon
+npm i -D nodemon@3.1.10
+
+# create tables or changes in database
+# the code is in 
+npm run db:generate - generate migrations
+npm run db:push - push schema to database
+npm run db:studio - open Drizzle Studio
+
+node apply-schema.js
+
+Option 1: Seed data only
+npm run db:seed
+Option 2: Setup everything (create tables + seed data)
+npm run db:setup
+
+Test API
+curl localhost:3000/products
+curl localhost:3000/products/7
+curl localhost:3000/orders
+curl -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "products": [
+      {"product_id": 1, "quantity": 2}
+    ]
+  }'
+
