@@ -1,58 +1,72 @@
 import { create } from 'zustand';
 import { Product } from '@/api/api';
 
+export type CartProduct = Product & { quantity: number };
+
 export interface CartState {
-  // Products with additional quantity property
-  products: Array<Product & { quantity: number }>;
+  products: CartProduct[];
+  total: number;
   addProduct: (product: Product) => void;
   reduceProduct: (product: Product) => void;
   clearCart: () => void;
-  total: number;
+  itemCount: number;
 }
 
 const useCartStore = create<CartState>((set) => ({
   products: [],
   total: 0,
+  itemCount: 0,
+
   addProduct: (product: Product) =>
     set((state) => {
-      const hasProduct = state.products.find((p) => p.id === product.id);
-      state.total += +product.product_price;
+      const existingProduct = state.products.find((p) => p.id === product.id);
+      const newTotal = state.total + product.product_price;
 
-      if (hasProduct) {
+      if (existingProduct) {
+        // Update existing product quantity
+        const updatedProducts = state.products.map((p) =>
+          p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
+        );
+
         return {
-          products: state.products.map((p) => {
-            if (p.id === product.id) {
-              return { ...p, quantity: p.quantity + 1 };
-            }
-            return p;
-          }),
-        };
-      } else {
-        return {
-          products: [...state.products, { ...product, quantity: 1 }],
+          products: updatedProducts,
+          total: newTotal,
+          itemCount: updatedProducts.reduce((sum, p) => sum + p.quantity, 0),
         };
       }
+
+      // Add new product
+      const updatedProducts = [...state.products, { ...product, quantity: 1 }];
+
+      return {
+        products: updatedProducts,
+        total: newTotal,
+        itemCount: updatedProducts.reduce((sum, p) => sum + p.quantity, 0),
+      };
     }),
+
   reduceProduct: (product: Product) =>
     set((state) => {
-      state.total -= +product.product_price;
+      const newTotal = state.total - product.product_price;
+
+      const updatedProducts = state.products
+        .map((p) =>
+          p.id === product.id ? { ...p, quantity: p.quantity - 1 } : p
+        )
+        .filter((p) => p.quantity > 0);
+
       return {
-        products: state.products
-          .map((p) => {
-            if (p.id === product.id) {
-              return { ...p, quantity: p.quantity - 1 };
-            }
-            return p;
-          })
-          .filter((p) => p.quantity > 0),
+        products: updatedProducts,
+        total: Math.max(0, newTotal), // Prevent negative totals
+        itemCount: updatedProducts.reduce((sum, p) => sum + p.quantity, 0),
       };
     }),
+
   clearCart: () =>
-    set((state) => {
-      state.total = 0;
-      return {
-        products: [],
-      };
+    set({
+      products: [],
+      total: 0,
+      itemCount: 0,
     }),
 }));
 
