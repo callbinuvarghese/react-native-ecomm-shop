@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 // @ts-ignore - env.js is a JavaScript file
 import { ENV } from "./config/env.js";
 
@@ -12,6 +13,13 @@ if (ENV.NODE_ENV === 'production') {
 
 
 const app = express();
+
+// Enable CORS for all origins (development)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {
