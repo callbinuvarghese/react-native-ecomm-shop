@@ -19,10 +19,9 @@ const api = axios.create({
   timeout: config.apiTimeout,
   headers: {
     'Content-Type': 'application/json',
-  },
-  // Accept 304 Not Modified as a valid response (for caching)
-  validateStatus: (status) => {
-    return (status >= 200 && status < 300) || status === 304;
+    // Disable caching to always get fresh data (prevents 304 responses)
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
   },
 });
 
@@ -35,12 +34,8 @@ api.interceptors.response.use(
       url: response.config.url,
       status: response.status,
       statusText: response.statusText,
+      hasData: response.data !== undefined,
     });
-
-    // Handle 304 Not Modified - return cached data or empty response
-    if (response.status === 304) {
-      console.log('  ℹ️  304 Not Modified - using cached data');
-    }
 
     return response;
   },
