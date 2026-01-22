@@ -18,11 +18,30 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Accept 304 Not Modified as a valid response (for caching)
+  validateStatus: (status) => {
+    return (status >= 200 && status < 300) || status === 304;
+  },
 });
 
-// Response interceptor for error handling
+// Response interceptor for error handling and logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful API calls
+    console.log('✅ API Success:', {
+      method: response.config.method?.toUpperCase(),
+      url: response.config.url,
+      status: response.status,
+      statusText: response.statusText,
+    });
+
+    // Handle 304 Not Modified - return cached data or empty response
+    if (response.status === 304) {
+      console.log('  ℹ️  304 Not Modified - using cached data');
+    }
+
+    return response;
+  },
   (error) => {
     console.error('🔴 API Error Details:');
     console.error('  Config:', {
