@@ -5,7 +5,16 @@ import { useProducts } from '@/hooks/useProducts';
 export default function ProductsScreen() {
   const { data: products, isLoading, error, refetch, isRefetching } = useProducts();
 
+  // Log detailed error information
+  if (error) {
+    console.error('❌ Error fetching products:');
+    console.error('Error message:', error.message);
+    console.error('Error object:', error);
+    console.error('API URL:', process.env.EXPO_PUBLIC_API_URL);
+  }
+
   if (isLoading) {
+    console.log('📦 Loading products from API...');
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#2563eb" />
@@ -20,10 +29,21 @@ export default function ProductsScreen() {
         <Text style={styles.errorTitle}>⚠️ Error Loading Products</Text>
         <Text style={styles.errorMessage}>{error.message}</Text>
         <Text style={styles.errorHint}>
+          API URL: {process.env.EXPO_PUBLIC_API_URL || 'Not configured'}
+        </Text>
+        <Text style={styles.errorHint}>
           Make sure the backend server is running and accessible.
+        </Text>
+        <Text style={styles.errorDebug}>
+          Check the console for more details.
         </Text>
       </View>
     );
+  }
+
+  // Log successful data fetch
+  if (products) {
+    console.log(`✅ Loaded ${products.length} products from API`);
   }
 
   if (!products || products.length === 0) {
@@ -87,6 +107,14 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     fontStyle: 'italic',
+    marginTop: 8,
+  },
+  errorDebug: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 12,
+    fontFamily: 'monospace',
   },
   emptyText: {
     fontSize: 16,
