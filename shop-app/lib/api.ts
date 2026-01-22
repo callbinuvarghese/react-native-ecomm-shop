@@ -11,6 +11,8 @@ import {
   CreateOrderRequest,
 } from './types';
 
+console.log('🔧 api.ts loaded - API URL:', config.apiUrl);
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: config.apiUrl,
@@ -75,8 +77,21 @@ api.interceptors.response.use(
 // API Functions with validation
 
 export async function fetchProducts(): Promise<Product[]> {
-  const { data } = await api.get('/products');
-  return z.array(ProductSchema).parse(data);
+  console.log('🔍 fetchProducts called - making request to /products');
+  try {
+    const response = await api.get('/products');
+    console.log('📦 fetchProducts response:', {
+      status: response.status,
+      statusText: response.statusText,
+      dataLength: Array.isArray(response.data) ? response.data.length : 'not an array',
+    });
+    const parsed = z.array(ProductSchema).parse(response.data);
+    console.log('✅ fetchProducts parsed successfully:', parsed.length, 'products');
+    return parsed;
+  } catch (error) {
+    console.error('❌ fetchProducts error:', error);
+    throw error;
+  }
 }
 
 export async function fetchProductById(id: number): Promise<Product> {
