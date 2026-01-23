@@ -3,7 +3,8 @@ import cors from 'cors';
 // @ts-ignore - env.js is a JavaScript file
 import { ENV } from "./config/env.js";
 
-const PORT = ENV.PORT || 5001;
+const PORT = ENV.PORT || 3000;
+const HOST = ENV.HOST || '0.0.0.0';
 
 if (ENV.NODE_ENV === 'production') {
   console.log('Running in production mode.');
@@ -53,6 +54,7 @@ app.use(express.json());
 import shopRouter from './shop';
 app.use(shopRouter);
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server listening on http://${HOST}:${PORT}`);
+  console.log(`To access from other devices, use your network IP (e.g., http://192.168.1.18:${PORT})`);
 });

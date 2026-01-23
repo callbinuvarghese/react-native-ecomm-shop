@@ -1,7 +1,8 @@
 import "dotenv/config";
 
 export const ENV = {
-  PORT: process.env.PORT || 5001,
+  PORT: process.env.PORT || 3000,
+  HOST: process.env.HOST || '0.0.0.0',
   DATABASE_URL: process.env.DATABASE_URL,
   NODE_ENV: process.env.NODE_ENV,
 };
