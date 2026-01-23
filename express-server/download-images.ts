@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { products } from './src/db/schema.js';
+import { products } from './src/db/schema';
 import { eq } from 'drizzle-orm';
 import ws from 'ws';
 import 'dotenv/config';
@@ -28,7 +28,7 @@ if (!fs.existsSync(IMAGES_DIR)) {
 /**
  * Download a file from URL to local path
  */
-function downloadFile(url, destPath) {
+function downloadFile(url: string, destPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     console.log(`  Downloading: ${url}`);
     const file = fs.createWriteStream(destPath);
@@ -55,7 +55,7 @@ function downloadFile(url, destPath) {
 /**
  * Extract filename from fakestoreapi URL
  */
-function extractFilename(url) {
+function extractFilename(url: string): string | null {
   const match = url.match(/\/img\/([^/]+)$/);
   return match ? match[1] : null;
 }
@@ -70,16 +70,16 @@ async function main() {
     // Get all products with fakestoreapi image URLs
     const allProducts = await db.select().from(products);
     const productsToUpdate = allProducts.filter(p =>
-      p.productImage && p.productImage.includes('fakestoreapi.com')
+      p.product_image && p.product_image.includes('fakestoreapi.com')
     );
 
     console.log(`Found ${productsToUpdate.length} products with fakestoreapi.com images\n`);
 
     for (const product of productsToUpdate) {
-      console.log(`📦 Processing: ${product.productName}`);
-      console.log(`  Old URL: ${product.productImage}`);
+      console.log(`📦 Processing: ${product.product_name}`);
+      console.log(`  Old URL: ${product.product_image}`);
 
-      const filename = extractFilename(product.productImage);
+      const filename = extractFilename(product.product_image);
       if (!filename) {
         console.log(`  ⚠️  Could not extract filename, skipping\n`);
         continue;
@@ -94,7 +94,8 @@ async function main() {
         try {
           await downloadFile(githubUrl, localPath);
         } catch (error) {
-          console.log(`  ❌ Download failed: ${error.message}`);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.log(`  ❌ Download failed: ${errorMessage}`);
           console.log(`  Skipping this product\n`);
           continue;
         }
@@ -106,8 +107,8 @@ async function main() {
       console.log(`  Updating database with: ${newImageUrl}`);
       await db
         .update(products)
-        .set({ productImage: newImageUrl })
-        .where(eq(products.productId, product.productId));
+        .set({ product_image: newImageUrl })
+        .where(eq(products.id, product.id));
 
       console.log(`  ✓ Updated successfully\n`);
     }
