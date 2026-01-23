@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import { useTheme } from '@react-navigation/native';
 import { useProduct } from '@/hooks/useProducts';
+import { useCart } from '@/contexts/CartContext';
 import { config } from '@/lib/config';
 
 function getImageUrl(imagePath: string): string {
@@ -14,34 +16,35 @@ function getImageUrl(imagePath: string): string {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const theme = useTheme();
+  const { addToCart, isInCart, getItemQuantity } = useCart();
   const productId = parseInt(id || '0', 10);
 
   const { data: product, isLoading, error } = useProduct(productId);
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <Stack.Screen options={{ title: 'Loading...' }} />
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.loadingText}>Loading product details...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.text }]}>Loading product details...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <Stack.Screen options={{ title: 'Error' }} />
         <Text style={styles.errorTitle}>Error Loading Product</Text>
-        <Text style={styles.errorMessage}>{error.message}</Text>
+        <Text style={[styles.errorMessage, { color: theme.colors.text }]}>{error.message}</Text>
       </View>
     );
   }
 
   if (!product) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <Stack.Screen options={{ title: 'Not Found' }} />
         <Text style={styles.errorTitle}>Product Not Found</Text>
       </View>
@@ -51,7 +54,7 @@ export default function ProductDetailScreen() {
   const imageUrl = getImageUrl(product.product_image);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen
         options={{
           title: product.product_name,
@@ -60,7 +63,7 @@ export default function ProductDetailScreen() {
       />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Product Image */}
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, { borderBottomColor: theme.colors.border }]}>
           <Image
             source={{ uri: imageUrl }}
             style={styles.image}
@@ -78,44 +81,52 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Product Name */}
-          <Text style={styles.productName}>{product.product_name}</Text>
+          <Text style={[styles.productName, { color: theme.colors.text }]}>{product.product_name}</Text>
 
           {/* Price */}
           <Text style={styles.price}>${product.product_price.toFixed(2)}</Text>
 
           {/* Description */}
           {product.product_description && (
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.descriptionTitle}>Description</Text>
-              <Text style={styles.description}>{product.product_description}</Text>
+            <View style={[styles.descriptionContainer, { borderTopColor: theme.colors.border }]}>
+              <Text style={[styles.descriptionTitle, { color: theme.colors.text }]}>Description</Text>
+              <Text style={[styles.description, { color: theme.colors.text }]}>{product.product_description}</Text>
             </View>
           )}
 
           {/* Product Details */}
-          <View style={styles.detailsContainer}>
-            <Text style={styles.detailsTitle}>Product Details</Text>
+          <View style={[styles.detailsContainer, { borderTopColor: theme.colors.border }]}>
+            <Text style={[styles.detailsTitle, { color: theme.colors.text }]}>Product Details</Text>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Product ID:</Text>
-              <Text style={styles.detailValue}>{product.id}</Text>
+              <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Product ID:</Text>
+              <Text style={[styles.detailValue, { color: theme.colors.text }]}>{product.id}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Category:</Text>
-              <Text style={styles.detailValue}>{product.product_category}</Text>
+              <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Category:</Text>
+              <Text style={[styles.detailValue, { color: theme.colors.text }]}>{product.product_category}</Text>
             </View>
           </View>
         </View>
       </ScrollView>
 
       {/* Add to Cart Button (Fixed at bottom) */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
         <Pressable
-          style={styles.addToCartButton}
+          style={[styles.addToCartButton, isInCart(product.id) && styles.addToCartButtonInCart]}
           onPress={() => {
-            // TODO: Implement add to cart functionality
-            alert('Add to cart functionality coming soon!');
+            addToCart(product, 1);
+            Alert.alert(
+              'Added to Cart',
+              `${product.product_name} has been added to your cart.`,
+              [{ text: 'OK' }]
+            );
           }}
         >
-          <Text style={styles.addToCartText}>Add to Cart</Text>
+          <Text style={styles.addToCartText}>
+            {isInCart(product.id)
+              ? `In Cart (${getItemQuantity(product.id)}) - Add More`
+              : 'Add to Cart'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -257,6 +268,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  addToCartButtonInCart: {
+    backgroundColor: '#059669',
   },
   addToCartText: {
     color: '#fff',
