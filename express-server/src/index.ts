@@ -1,7 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // @ts-ignore - env.js is a JavaScript file
 import { ENV } from "./config/env.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = ENV.PORT || 3000;
 const HOST = ENV.HOST || '0.0.0.0';
@@ -50,6 +55,11 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// Serve static files from public directory (for product images)
+const publicPath = path.join(__dirname, '..', '..', 'public');
+app.use('/images', express.static(path.join(publicPath, 'images')));
+console.log(`📁 Serving static images from: ${path.join(publicPath, 'images')}`);
 
 import shopRouter from './shop';
 app.use(shopRouter);

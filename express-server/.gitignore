@@ -38,3 +38,11 @@ lerna-debug.log*
 .env
 .prod.env
 .dev.env
+
+# Downloaded product images (can be regenerated with npm run images:download)
+public/images/*
+# But keep the directory structure
+!public/images/.gitkeep
+
+# Backup files
+*.backup
