@@ -8,7 +8,11 @@ export const ProductSchema = z.object({
   product_description: z.string(),
   product_price: z.number(),
   product_stock: z.number(),
-  product_image: z.string().url(),
+  // Allow both full URLs and relative paths (e.g., /images/...)
+  product_image: z.string().refine(
+    (val) => val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/'),
+    { message: 'Must be a valid URL or path starting with /' }
+  ),
 });
 
 export const OrderSchema = z.object({
@@ -25,7 +29,11 @@ export const OrderItemSchema = z.object({
   total: z.number(),
   product_name: z.string().optional(),
   product_price: z.number().optional(),
-  product_image: z.string().url().optional(),
+  // Allow both full URLs and relative paths
+  product_image: z.string().refine(
+    (val) => val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/'),
+    { message: 'Must be a valid URL or path starting with /' }
+  ).optional(),
 });
 
 export const OrderWithItemsSchema = OrderSchema.extend({
