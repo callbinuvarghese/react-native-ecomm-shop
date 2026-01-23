@@ -94,6 +94,16 @@ export async function fetchProductById(id: number): Promise<Product> {
   return ProductSchema.parse(data);
 }
 
+export async function fetchCategories(): Promise<string[]> {
+  const { data } = await api.get('/categories');
+  return z.array(z.string()).parse(data);
+}
+
+export async function fetchProductsByCategory(category: string): Promise<Product[]> {
+  const { data } = await api.get(`/categories/${encodeURIComponent(category)}/products`);
+  return z.array(ProductSchema).parse(data);
+}
+
 export async function createOrder(orderData: CreateOrderRequest): Promise<Order> {
   const { data} = await api.post('/orders', orderData);
   return OrderSchema.parse(data);
