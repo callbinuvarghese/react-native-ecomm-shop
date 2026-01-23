@@ -1,12 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
 // @ts-ignore - env.js is a JavaScript file
 import { ENV } from "./config/env.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const PORT = ENV.PORT || 3000;
 const HOST = ENV.HOST || '0.0.0.0';
