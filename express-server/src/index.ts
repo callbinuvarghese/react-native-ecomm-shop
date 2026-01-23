@@ -53,9 +53,12 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // Serve static files from public directory (for product images)
-const publicPath = path.join(__dirname, '..', '..', 'public');
-app.use('/images', express.static(path.join(publicPath, 'images')));
-console.log(`📁 Serving static images from: ${path.join(publicPath, 'images')}`);
+// In ts-node: __dirname = /express-server/src
+// In compiled: __dirname = /express-server/dist
+const publicPath = path.join(__dirname, '..', 'public');
+const imagesPath = path.join(publicPath, 'images');
+console.log(`📁 Serving static images from: ${imagesPath}`);
+app.use('/images', express.static(imagesPath));
 
 import shopRouter from './shop';
 app.use(shopRouter);
