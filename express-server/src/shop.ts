@@ -55,7 +55,7 @@ router.get('/categories', async (req: Request, res: Response) => {
 // Get products by category
 router.get('/categories/:category/products', async (req: Request, res: Response) => {
   try {
-    const { category } = req.params;
+    const category = req.params.category as string;
     const rows = await db
       .select()
       .from(products)
