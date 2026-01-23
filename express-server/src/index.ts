@@ -61,7 +61,7 @@ const publicPath = path.join(__dirname, '..', '..', 'public');
 app.use('/images', express.static(path.join(publicPath, 'images')));
 console.log(`📁 Serving static images from: ${path.join(publicPath, 'images')}`);
 
-import shopRouter from './shop';
+import shopRouter from './shop.js';
 app.use(shopRouter);
 
 app.listen(PORT, HOST, () => {
