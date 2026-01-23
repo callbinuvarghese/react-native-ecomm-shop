@@ -1,7 +1,11 @@
-const { neon } = require('@neondatabase/serverless');
-const { readFileSync } = require('fs');
-const { config } = require('dotenv');
-const path = require('path');
+import { neon } from '@neondatabase/serverless';
+import { readFileSync } from 'fs';
+import { config } from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 config({ path: '.env' });
