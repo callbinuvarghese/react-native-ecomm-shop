@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 const router = express.Router();
 import { OrderItem, order_items, orders, products } from './db/schema';
 import { db } from "./config/db";
@@ -31,6 +31,41 @@ router.get('/products/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Product not found.' });
     }
     res.json(rows[0]);
+  } catch (err) {
+    handleQueryError(err, res);
+  }
+});
+
+// Get all product categories
+router.get('/categories', async (req: Request, res: Response) => {
+  try {
+    const rows = await db
+      .selectDistinct({ category: products.product_category })
+      .from(products)
+      .orderBy(products.product_category);
+
+    // Return array of category strings
+    const categories = rows.map(row => row.category);
+    res.json(categories);
+  } catch (err) {
+    handleQueryError(err, res);
+  }
+});
+
+// Get products by category
+router.get('/categories/:category/products', async (req: Request, res: Response) => {
+  try {
+    const { category } = req.params;
+    const rows = await db
+      .select()
+      .from(products)
+      .where(eq(products.product_category, category));
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No products found in this category.' });
+    }
+
+    res.json(rows);
   } catch (err) {
     handleQueryError(err, res);
   }
