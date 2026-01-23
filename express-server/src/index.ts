@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './swagger';
 // @ts-ignore - env.js is a JavaScript file
 import { ENV } from "./config/env.js";
 
@@ -52,6 +54,12 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'E-Commerce API Docs',
+}));
+
 // Serve static files from public directory (for product images)
 // In ts-node: __dirname = /express-server/src
 // In compiled: __dirname = /express-server/dist
@@ -65,5 +73,6 @@ app.use(shopRouter);
 
 app.listen(PORT, HOST, () => {
   console.log(`Server listening on http://${HOST}:${PORT}`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
   console.log(`To access from other devices, use your network IP (e.g., http://192.168.1.18:${PORT})`);
 });

@@ -12,7 +12,29 @@ const handleQueryError = (err: any, res: Response) => {
   res.status(500).json({ error: 'An error occurred while executing the query.', details: err.message });
 };
 
-// Get all products
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Get all products
+ *     tags: [Products]
+ *     description: Retrieve a list of all products
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/products', async (req: Request, res: Response) => {
   try {
     const rows = await db.select().from(products);
@@ -22,7 +44,31 @@ router.get('/products', async (req: Request, res: Response) => {
   }
 });
 
-// Get a single product by ID
+/**
+ * @swagger
+ * /products/{id}:
+ *   get:
+ *     summary: Get a single product by ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Product ID
+ *     responses:
+ *       200:
+ *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/products/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -36,7 +82,24 @@ router.get('/products/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Get all product categories
+/**
+ * @swagger
+ * /categories:
+ *   get:
+ *     summary: Get all product categories
+ *     tags: [Categories]
+ *     description: Retrieve a list of all unique product categories
+ *     responses:
+ *       200:
+ *         description: List of categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               example: ["electronics", "men's clothing", "women's clothing"]
+ */
 router.get('/categories', async (req: Request, res: Response) => {
   try {
     const rows = await db
@@ -52,7 +115,32 @@ router.get('/categories', async (req: Request, res: Response) => {
   }
 });
 
-// Get products by category
+/**
+ * @swagger
+ * /categories/{category}/products:
+ *   get:
+ *     summary: Get products by category
+ *     tags: [Categories]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Category name
+ *         example: electronics
+ *     responses:
+ *       200:
+ *         description: List of products in the category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: No products found in this category
+ */
 router.get('/categories/:category/products', async (req: Request, res: Response) => {
   try {
     const category = req.params.category as string;
@@ -71,7 +159,29 @@ router.get('/categories/:category/products', async (req: Request, res: Response)
   }
 });
 
-// Get all orders
+/**
+ * @swagger
+ * /orders:
+ *   get:
+ *     summary: Get all orders
+ *     tags: [Orders]
+ *     description: Retrieve a list of all orders
+ *     responses:
+ *       200:
+ *         description: List of orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Order'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/orders', async (req: Request, res: Response) => {
   try {
     const allOrders = await db.select().from(orders);
@@ -81,7 +191,43 @@ router.get('/orders', async (req: Request, res: Response) => {
   }
 });
 
-// Get a single order by ID with its items
+/**
+ * @swagger
+ * /orders/{id}:
+ *   get:
+ *     summary: Get a single order by ID
+ *     tags: [Orders]
+ *     description: Retrieve order details including order items with product information
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Order details with items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Order'
+ *                 - type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ */
 router.get('/orders/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -113,7 +259,29 @@ router.get('/orders/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create a new order with multiple products and a user email
+/**
+ * @swagger
+ * /orders:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Orders]
+ *     description: Create a new order with multiple products
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateOrder'
+ *     responses:
+ *       200:
+ *         description: Order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Order'
+ *       500:
+ *         description: Server error
+ */
 router.post('/orders', async (req: Request, res: Response) => {
   try {
     const { email, products: orderBody } = req.body;
