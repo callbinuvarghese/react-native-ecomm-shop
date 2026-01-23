@@ -48,6 +48,11 @@ export default function ProductsScreen() {
   if (products) {
     console.log(`✅ Loaded ${products.length} products from API`);
   }
+  if (categories) {
+    console.log(`✅ Loaded ${categories.length} categories from API`)
+  } else {
+    console.log('No categories loaded')
+  }
 
   if (!products || products.length === 0) {
     return (
@@ -118,6 +123,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    zIndex: 10,
+    elevation: 2,
   },
   categoriesContent: {
     paddingHorizontal: 16,
