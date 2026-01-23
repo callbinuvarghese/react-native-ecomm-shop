@@ -2,20 +2,39 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Product } from '@/lib/types';
+import { config } from '@/lib/config';
 
 interface ProductCardProps {
   product: Product;
 }
 
+/**
+ * Get full image URL by prepending API base URL if needed
+ */
+function getImageUrl(imagePath: string): string {
+  if (!imagePath) return '';
+
+  // If path starts with /images/, prepend the API URL
+  if (imagePath.startsWith('/images/')) {
+    return `${config.apiUrl}${imagePath}`;
+  }
+
+  // Otherwise return as-is (already a full URL)
+  return imagePath;
+}
+
 export function ProductCard({ product }: ProductCardProps) {
+  const imageUrl = getImageUrl(product.product_image);
+
   return (
     <Link href={`/product/${product.id}`} asChild>
       <Pressable style={styles.card}>
         <Image
-          source={{ uri: product.product_image }}
+          source={{ uri: imageUrl }}
           style={styles.image}
           contentFit="cover"
           transition={200}
+          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={2}>
