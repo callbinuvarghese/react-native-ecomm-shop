@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { products } from './src/db/schema';
+import { products } from './src/db/schema.js';
 import { eq } from 'drizzle-orm';
 import ws from 'ws';
 import 'dotenv/config';
