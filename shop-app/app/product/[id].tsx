@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useTheme } from '@react-navigation/native';
 import { useProduct } from '@/hooks/useProducts';
-import { useCart } from '@/contexts/CartContext';
+import { useCartStore } from '@/lib/store';
 import { config } from '@/lib/config';
 
 function getImageUrl(imagePath: string): string {
@@ -17,7 +17,7 @@ function getImageUrl(imagePath: string): string {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const { addToCart, isInCart, getItemQuantity } = useCart();
+  const { addItem, isInCart, getItemQuantity } = useCartStore();
   const productId = parseInt(id || '0', 10);
 
   const { data: product, isLoading, error } = useProduct(productId);
@@ -114,7 +114,7 @@ export default function ProductDetailScreen() {
         <Pressable
           style={[styles.addToCartButton, isInCart(product.id) && styles.addToCartButtonInCart]}
           onPress={() => {
-            addToCart(product, 1);
+            addItem(product, 1);
             Alert.alert(
               'Added to Cart',
               `${product.product_name} has been added to your cart.`,

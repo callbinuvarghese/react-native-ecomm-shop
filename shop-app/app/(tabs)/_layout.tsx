@@ -3,7 +3,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useCart } from '@/contexts/CartContext';
+import { useCartStore } from '@/lib/store';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -14,8 +14,7 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { getItemCount } = useCart();
-  const itemCount = getItemCount();
+  const itemCount = useCartStore((state) => state.itemCount);
 
   return (
     <Tabs

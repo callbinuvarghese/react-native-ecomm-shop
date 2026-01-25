@@ -1,6 +1,6 @@
 import { StyleSheet, FlatList, View, Text, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
-import { useCart } from '@/contexts/CartContext';
+import { useCartStore } from '@/lib/store';
 import { config } from '@/lib/config';
 import { CartItem } from '@/lib/types';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -21,7 +21,7 @@ function getImageUrl(imagePath: string): string {
 }
 
 function CartItemCard({ item }: { item: CartItem }) {
-  const { updateQuantity, removeFromCart } = useCart();
+  const { updateQuantity, removeItem } = useCartStore();
   const imageUrl = getImageUrl(item.product_image);
 
   const handleRemove = () => {
@@ -30,7 +30,7 @@ function CartItemCard({ item }: { item: CartItem }) {
       `Remove ${item.product_name} from cart?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => removeFromCart(item.id) },
+        { text: 'Remove', style: 'destructive', onPress: () => removeItem(item.id) },
       ]
     );
   };
@@ -81,9 +81,7 @@ function CartItemCard({ item }: { item: CartItem }) {
 }
 
 export default function CartScreen() {
-  const { items, getTotal, getItemCount, clearCart } = useCart();
-  const total = getTotal();
-  const itemCount = getItemCount();
+  const { items, total, itemCount, clearCart } = useCartStore();
 
   const handleClearCart = () => {
     Alert.alert(
