@@ -1,6 +1,8 @@
-import { StyleSheet, FlatList, View, Text, Pressable, Alert } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, FlatList, View, Text, Pressable, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { useCartStore } from '@/lib/store';
+import { useCreateOrder } from '@/hooks/useOrders';
 import { config } from '@/lib/config';
 import { CartItem } from '@/lib/types';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -82,6 +84,10 @@ function CartItemCard({ item }: { item: CartItem }) {
 
 export default function CartScreen() {
   const { items, total, itemCount, clearCart } = useCartStore();
+  const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const createOrderMutation = useCreateOrder();
 
   const handleClearCart = () => {
     Alert.alert(
@@ -94,18 +100,70 @@ export default function CartScreen() {
     );
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleCheckout = () => {
-    Alert.alert(
-      'Checkout',
-      `Proceed to checkout with ${itemCount} item(s) for $${total.toFixed(2)}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Checkout', onPress: () => {
-          // TODO: Implement checkout flow
-          Alert.alert('Success', 'Checkout functionality coming soon!');
-        }},
-      ]
-    );
+    setEmail('');
+    setEmailError('');
+    setCheckoutModalVisible(true);
+  };
+
+  const handleSubmitOrder = async () => {
+    // Validate email
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setEmailError('');
+
+    try {
+      // Prepare order data
+      const orderData = {
+        email: email.trim(),
+        products: items.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        })),
+      };
+
+      // Submit order
+      await createOrderMutation.mutateAsync(orderData);
+
+      // Close modal
+      setCheckoutModalVisible(false);
+
+      // Show success message
+      Alert.alert(
+        'Order Placed Successfully!',
+        `Your order has been placed. A confirmation email will be sent to ${email}.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Clear cart after success
+              clearCart();
+              setEmail('');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      // Show error message
+      Alert.alert(
+        'Order Failed',
+        error instanceof Error ? error.message : 'Failed to place order. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   if (items.length === 0) {
@@ -150,6 +208,93 @@ export default function CartScreen() {
           </Pressable>
         </View>
       </View>
+
+      {/* Checkout Modal */}
+      <Modal
+        visible={checkoutModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setCheckoutModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setCheckoutModalVisible(false)}
+          />
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Checkout</Text>
+              <Pressable onPress={() => setCheckoutModalVisible(false)}>
+                <FontAwesome name="times" size={24} color="#6b7280" />
+              </Pressable>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.orderSummaryTitle}>Order Summary</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Items:</Text>
+                <Text style={styles.summaryValue}>{itemCount}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total:</Text>
+                <Text style={styles.summaryTotal}>${total.toFixed(2)}</Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <TextInput
+                style={[styles.emailInput, emailError ? styles.emailInputError : null]}
+                placeholder="Enter your email"
+                placeholderTextColor="#9ca3af"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setEmailError('');
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus={true}
+              />
+              {emailError ? (
+                <Text style={styles.errorText}>{emailError}</Text>
+              ) : null}
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => setCheckoutModalVisible(false)}
+                  disabled={createOrderMutation.isPending}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.submitButton,
+                    createOrderMutation.isPending && styles.submitButtonDisabled,
+                  ]}
+                  onPress={handleSubmitOrder}
+                  disabled={createOrderMutation.isPending}
+                >
+                  {createOrderMutation.isPending ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Text style={styles.submitButtonText}>Place Order</Text>
+                      <FontAwesome name="check" size={16} color="#fff" />
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -305,5 +450,133 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: '#9ca3af',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 24,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  orderSummaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  summaryTotal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginVertical: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emailInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+    backgroundColor: '#fff',
+  },
+  emailInputError: {
+    borderColor: '#dc2626',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#dc2626',
+    marginTop: 4,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  submitButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#93c5fd',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
